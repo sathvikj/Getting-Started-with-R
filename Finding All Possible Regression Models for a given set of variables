@@ -1,0 +1,69 @@
+rm(list=ls(all=TRUE)) # remove the existing variable's
+
+lib.load <- c("data.table", "plyr")
+lib.install <- lib.load[!lib.load %in% installed.packages()]
+for (i in lib.install) install.packages(i)  #load required libraries at once
+
+# plyr used for the func "ldply"; casts the results to single data frame after applying function
+data <- fread("wage.csv")
+
+comb <- expand.grid(c(T,F), c(T,F),c(T,F)) # create a (T/F) grid to generate the number of possible combinations of model's 
+# that has k number of independent variables which is 2^k-1; in this case k = 3
+
+comb <- comb[-nrow(comb),] # in case you want to remove the variable where no variable is chosen
+
+names(comb) <- names(data[,2:ncol(data)]) # assuming that your dependent variable is in first column, alter accordingly
+
+models <- apply(comb, 1, function(x) as.formula( #This generates the total number of possible models as list and not as df or vector
+  paste(c("wage ~ 1", names(comb)[x]),collapse=" + "))) # insert your dependent variable name in this case it's wage
+
+models # the reason for using ~ 1 is to display the first column in the result set as intercepts, use 0 in case you dont need them
+
+final <- lapply(models,function(x) lm(x, data = data)) # function to apply linear modelling for all the combinations (7)
+
+
+coeffs   <- ldply(final, function(x) as.data.frame(t(coef(x)))) #retrieve all the coefficients( Beta values)
+stderrors <- ldply(final, function(x) as.data.frame(t(coef(summary(x))[, "Std. Error"]))) # retrieve all the standard errors
+tvals   <- ldply(final, function(x) as.data.frame(t(coef(summary(x))[, "t value"]))) # retrieve t-stats
+pvals   <- ldply(final, function(x) as.data.frame(t(coef(summary(x))[, "Pr(>|t|)"]))) # retrieve all p values
+
+
+names(stderrors) <- paste("stderrors", names(stderrors)) #adjust the naming 
+names(tvals) <- paste("tvals", names(tvals))             #for easier recognition 
+names(pvals) <- paste("pvals", names(pvals))             #and visualization
+
+
+fvals <- function(x){  # This function is used to calculate all the f-statistics 
+  fstat <- summary(x)$fstatistic # when went ahead. Ignore if this doesn't help you in model selection
+  pVal <- pf(fstat[1], fstat[2], fstat[3], lower.tail = F)
+  return(pVal)
+}
+
+
+
+Rsq <- unlist(lapply(final, function(x) summary(x)$r.squared)) # Pull out the R squared numbers
+adjRsq <- unlist(lapply(final, function(x) summary(x)$adj.r.squared)) # Pull out the adjusted R squared numbers
+Rt_Mn_Sq_Er <- unlist(lapply(final, function(x) summary(x)$sigma)) # Pull out the Root Mean Squared Errors
+fstats <- unlist(lapply(final, fvals))              # pull out the f-stats
+B_I_C   <- ldply(final, function(x) as.data.frame(t(BIC(x)))) # to calculate BIC values
+A_I_C   <- ldply(final, function(x) as.data.frame(t(BIC(x)))) # to calculate AIC values
+
+# Put all the values together in a data frame so that everything is at a place
+results <- data.frame( indep = as.character(models), coeffs, stderrors, tvals,
+                       pvals,R2 = Rsq, adjR2 = adjRsq, RMSE = Rt_Mn_Sq_Er, pF = fstats,
+                       B_I_C=B_I_C, A_I_C=A_I_C)
+view(results)
+
+#From here you can navigate to which model is giving you the best relusts and use the row indexes to 
+# find out the row that has the combination of the model and get your model better from there
+# This should give you a rough, yet effective way to look at the whole stats of a model and help
+# you selecting which variables to include and which variable to exclude.
+# Please bear with the annoying id. number columns and I couldn't take them off (damn!)
+
+# Disclaimer: The data is taken from one of the assignments that were given to me in the university and in no means it is true or real
+# Also, I took help of several online materials as help to achive this code and not developed by me completely, I'm still learning
+# Sathvik
+
+
+
+
