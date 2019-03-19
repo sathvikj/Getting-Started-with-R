@@ -1,0 +1,727 @@
+load.libraries <- c("shiny","ggplot2","igraph","dplyr","visNetwork","data.table","shinythemes")
+install.lib <- load.libraries[!load.libraries %in% installed.packages()]
+for(libs in install.lib) install.packages(libs)
+sapply(load.libraries, require, character = TRUE)
+
+
+ui <- 
+  navbarPage("Sathvik Reddy Junutula - Social Network Analysis of Totota Camry on Cars.com",
+             theme = shinythemes::shinytheme("yeti"),
+             #shinythemes::themeSelector(),
+             tabsetPanel(id = "tabs",
+                         tabPanel(
+                           "Functionality", 
+                           #htmlOutput("contents12")
+                           h4("Purpose"),
+                           h6("To understand the communication network generated from email data"),
+                           tags$hr(),
+                           h4("Functionality  of each tab"),
+                           tags$i("Upload data and View Result:"),
+                           h6("Browse the files in txt format and visualize any n(user input) connections"),
+                           tags$i("Member Summary:"),
+                           h6("Compute the number of mails sent by each person"),
+                           tags$i("Top Ten Network:"),
+                           h6("Display and Visualize two hop neighbors for top ten Members who sent the mail and top ten who received the mails"),
+                           tags$i("Centrality:"),
+                           h6("Display and Visualize the two hop neighbours for top ten Members by centrality in an undirected network"),
+                           tags$i("Betweenness Centrality:"),
+                           h6("Display and Visualize the two hop neighbours for top ten Members by betweenness  centrality in an undirected network"),
+                           tags$i("Indegree Centrality:"),
+                           h6("Display and Visualize the two hop neighbours for top ten Members by Indegree centrality in a directed network"),
+                           tags$i("Department:"),
+                           h6("Display and Visualize the connections between departments"),
+                           
+                           tags$hr()
+                         ),
+                         tabPanel(
+                           "Upload data and View Result",
+                           sidebarLayout(
+                             sidebarPanel(
+                               h4("Browse the files in txt format and visualize any n(user input) connections of email-Eu-core.txt"),
+                               h5("Input box below can be used as a user input"),
+                               fileInput("file1", "Choose email-Eu-core.txt File",multiple = TRUE,accept = c("text")),
+                               tags$br(),
+                               fileInput("file2", "Choose email-Eu-core-department-labels.txt File",multiple = TRUE,accept = c("text")),
+                               uiOutput("slider")
+                             ),
+                             mainPanel(dataTableOutput("contents1")
+                             )
+                           )
+                         ),
+                         tabPanel(
+                           "Member Summary",
+                           sidebarLayout(
+                             sidebarPanel(
+                               h4("Compute the number of mails sent by each person"),
+                               h5("This tab has two subtabs- first one for sent and second one for received")
+                               
+                             ),
+                             mainPanel(
+                               tabsetPanel(type = "tabs",       
+                                           tabPanel("Mails sent by each member",  tableOutput("contents3")),
+                                           tabPanel("Mails received by each member",  tableOutput("contents4"))       
+                               )
+                             )
+                           )
+                         ),
+                         tabPanel(
+                           "Top Ten Network",
+                           sidebarLayout(
+                             sidebarPanel(
+                               h4("Display and Visualize two hop neighbors for top ten Members who sent the mail and top ten who received the mails"),
+                               h5("The userinput, which has top ten unique member id's from top ten sent and received, has to be selected"),
+                               h5("This tab has two subtabs - first tab to display first hop and second hop in a directed network and the second tab for the network display in a directed network"),
+                               h5("In the graph (second tab): Color FireBricks for the main node, Color Forestgreen for the first hop nodes and Color Steelblue for the second hop nodes"),
+                               h6(" 'Select by id' filter in the plot area can be used to highlight a particular node and its connected node "),
+                               h6("In the plot: Size of the selected node is larger than the size of first hop node and first hop node size is larger than the size of second hop nodes"),
+                               h6("note: Display of a graph generally takes ~10 seconds"),
+                               uiOutput("hop")
+                             ),
+                             mainPanel(
+                               tabsetPanel(type = "tabs",       
+                                           tabPanel("Data",  verbatimTextOutput("contents8")),
+                                           tabPanel("Plot",  visNetworkOutput("plot3", width = "100%", height = "100%"))       
+                               )
+                             )
+                           )
+                         ),
+                         tabPanel(
+                           "Centrality",
+                           mainPanel(
+                             tabsetPanel(type = "tabs",
+                                         tabPanel("Data",
+                                                  sidebarLayout(
+                                                    sidebarPanel(
+                                                      h4("Display and Visualize the two hop neighbours for top ten Members by centrality in an undirected network"),
+                                                      h5("This tab has two subtabs - first tab for display first hop and second hop in an undirected network and the second tab for the network display in an undirected network"),
+                                                      h5("The userinput, which has top ten member id's of top ten by centrality, has to be selected"),
+                                                      
+                                                      uiOutput("centrality")
+                                                    ),
+                                                    mainPanel(
+                                                      tabPanel("Data",  verbatimTextOutput("contents9"))
+                                                      #visNetworkOutput("plot4", width = "200%", height = "200%")
+                                                    )
+                                                  )
+                                         ),
+                                         tabPanel("Plot", 
+                                                  sidebarLayout(
+                                                    sidebarPanel(
+                                                      h4("Display and Visualize the two hop neighbours for top ten Members by centrality in an undirected network"),
+                                                      h5("This tab has two subtabs - first tab for display first hop and second hop in an undirected network and the second tab for the network display in an undirected network"),
+                                                      h6(" 'Select by id' filter in the plot area can be used to highlight a particular node and its connected node "),
+                                                      h6("In the plot: Size of the top ten nodes by centrality is larger than the size of first hop node and first hop node size is larger than the size of second hop nodes"),
+                                                      h6("note: Display of a graph generally takes ~10 seconds")
+                                                      
+                                                    ),
+                                                    mainPanel(
+                                                      visNetworkOutput("plot8", width = "200%", height = "200%")
+                                                    )
+                                                  )
+                                         )
+                                         
+                             )
+                           )
+                         )
+                         ,
+                         tabPanel(
+                           "Betweenness Centrality ",
+                           mainPanel(
+                             tabsetPanel(type = "tabs",
+                                         tabPanel("Data",
+                                                  sidebarLayout(
+                                                    sidebarPanel(
+                                                      h4("Display and Visualize the two hop neighbours for top ten Members by betweenness centrality in an undirected network"),
+                                                      h5("This tab has two subtabs - first tab for display first hop and second hop in an undirected network and the second tab for the network display in an undirected network"),
+                                                      h5("The userinput, which has top ten member id's of top ten by betweenness centrality, has to be selected"),
+                                                      
+                                                      uiOutput("between")
+                                                    ),
+                                                    mainPanel(
+                                                      tabPanel("Data",  verbatimTextOutput("contents11"))
+                                                      #visNetworkOutput("plot7", width = "200%", height = "200%")
+                                                    )
+                                                  )
+                                         ),
+                                         tabPanel("Plot",
+                                                  sidebarLayout(
+                                                    sidebarPanel(
+                                                      h4("Display and Visualize the two hop neighbours for top ten Members by betweenness centrality in an undirected network"),
+                                                      h5("This tab has two subtabs - first tab for display first hop and second hop in an undirected network and the second tab for the network display in an undirected network"),
+                                                      h6(" 'Select by id' filter in the plot area can be used to highlight a particular node and its connected node "),
+                                                      h6("In the plot: Size of the top ten nodes by betweenness centrality is larger than the size of first hop node and first hop node size is larger than the size of second hop nodes"),
+                                                      h6("note: Display of a graph generally takes ~10 seconds")
+                                                      
+                                                    ),
+                                                    mainPanel(
+                                                      visNetworkOutput("plot10", width = "200%", height = "200%")
+                                                    )
+                                                  )
+                                         )
+                             )
+                           )
+                         ),
+                         tabPanel(
+                           "Indegree Centrality",
+                           mainPanel(
+                             tabsetPanel(type = "tabs",
+                                         tabPanel("Data ",
+                                                  sidebarLayout(
+                                                    sidebarPanel(
+                                                      h4("Display and Visualize the two hop neighbours for top ten Members by indegree centrality in an undirected network"),
+                                                      h5("This tab has two subtabs - first tab for display first hop and second hop in a directed network and the second tab for the network display in a directed network"),
+                                                      h5("The userinput, which has top ten member id's of top ten by indegree centrality, has to be selected"),
+                                                      
+                                                      uiOutput("indegree")
+                                                    ),
+                                                    mainPanel(
+                                                      tabPanel("Data",  verbatimTextOutput("contents10"))
+                                                      #visNetworkOutput("plot5", width = "200%", height = "200%")
+                                                    )
+                                                  )
+                                         ),
+                                         tabPanel("Plot ",
+                                                  sidebarLayout(
+                                                    sidebarPanel(
+                                                      h4("Display and Visualize the two hop neighbours for top ten Members by indegree centrality in an undirected network"),
+                                                      h5("This tab has two subtabs - first tab for display first hop and second hop in a directed network and the second tab for the network display in a directed network"),
+                                                      h6(" 'Select by id' filter in the plot area can be used to highlight a particular node and its connected node "),
+                                                      h6("In the plot: Size of the top ten nodes by indegree centrality  is larger than the size of first hop node and first hop node size is larger than the size of second hop nodes"),
+                                                      h6("note: Display of a graph generally takes ~10 seconds")
+                                                    ),
+                                                    mainPanel(
+                                                      visNetworkOutput("plot9", width = "200%", height = "200%")
+                                                    )
+                                                  )
+                                         )
+                                         
+                             )
+                           )
+                         )
+                         ,
+                         tabPanel(
+                           "Department",
+                           sidebarLayout(
+                             sidebarPanel(
+                               
+                               h4("Display and Visualize the connections between departments"),
+                               h5("This tab has two subtabs - first tab for display of data and the second tab for the network display in a directed network"),
+                               h6(" 'Select by id' filter in the plot area can be used to highlight a particular department and its connected departments ")
+                             ),
+                             mainPanel(
+                               tabsetPanel(type = "tabs",       
+                                           tabPanel("Data",  dataTableOutput("contents7")),
+                                           tabPanel("Plot", visNetworkOutput("plot6", width = "100%", height = "100%"))       
+                               )
+                             )
+                           )
+                         )
+                         
+                         
+             )
+  )
+
+server <- function(input, output) {
+  values <- reactiveValues(df_data1 = NULL, df_data2=NULL, df_data3=NULL, df_data4=NULL, df_data5=NULL, df_data6=NULL, df_data7=NULL, df_data8=NULL)
+  
+  #read data and calculate centrality and indegree
+  observeEvent(input$file1, {
+    values$df_data1 <- read.csv(input$file1$datapath, header = FALSE, sep="\t")
+    values$df_data1<-data.frame(values$df_data1)
+    colnames(values$df_data1) <- c("Mail From: Member ID", "Mail To : Member ID")
+    
+    values$df_data4<-data.frame(table(values$df_data1$`Mail From: Member ID`))
+    colnames(values$df_data4) <- c("Member ID", "Frequency of mail sent")
+    values$df_data4<-values$df_data4[order(-values$df_data4$`Frequency of mail sent`),]
+    
+    values$df_data5<-data.frame(table(values$df_data1$`Mail To : Member ID`))
+    colnames(values$df_data5) <- c("Member ID", "Frequency of mail received")
+    values$df_data5<-values$df_data5[order(-values$df_data5$`Frequency of mail received`),]
+    
+    
+    #centrality and indegree
+    edges_from2<-aggregate(`Mail From: Member ID` ~ `Mail To : Member ID`, data = values$df_data1, paste, collapse = " ")
+    edges_to2<-aggregate(`Mail To : Member ID` ~ `Mail From: Member ID`, data=values$df_data1, paste, collapse = " ")
+    colnames(edges_from2) <- c("id", "from")
+    colnames(edges_to2) <- c("id", "to")
+    edges_all2<-merge(edges_from2,edges_to2, all.x = TRUE, all.y = TRUE)
+    edges_all2[is.na(edges_all2)]<-NA
+    edges_all2$all<-paste(coalesce(edges_all2$from,edges_all2$to),coalesce(edges_all2$to,edges_all2$from))
+    
+    edges_all2$all_count<-0
+    edges_all2$self<-0
+    edges_all2$in_degree_withself<-0
+    for(i in 1:(nrow(edges_all2))){
+      if(!is.na(edges_all2$all[i])){
+        edges_all2$all_count[i]<-length(noquote(unique(unlist(strsplit(edges_all2$all[i], "[ ]")))))
+        edges_all2$self[i]<-sum(!is.na(match(edges_all2$id[i],noquote(unique(unlist(strsplit(edges_all2$all[i], "[ ]")))))))
+      }
+      if(!is.na(edges_all2$from[i])){
+        edges_all2$in_degree_withself[i]<-length(noquote(unique(unlist(strsplit(edges_all2$from[i], "[ ]")))))
+      }
+    }
+    edges_all2$centrality_withself<-edges_all2$all_count
+    values$df_data7<-edges_all2
+    
+    
+    #between
+    graph <- graph.data.frame(values$df_data1, directed=F)
+    df_between<-data.frame(between=round(betweenness(graph, v = V(graph),  normalized = FALSE),4))
+    df_between$node<-row.names(df_between)
+    df_between<-head(df_between[order(-df_between$between),],10)
+    values$df_data8<-df_between
+    
+  })
+  
+  
+  #read department data
+  observeEvent(input$file2, {
+    values$df_data2 <- read.csv(input$file2$datapath, header = FALSE, sep="\t")
+    values$df_data2<-data.frame(values$df_data2)
+    colnames(values$df_data2) <-  c("Member ID", "Department ID")
+  })
+  
+  #slider for displaying n connections
+  observeEvent(input$obs, {
+    values$df_data3 <-  head(values$df_data1, n = input$obs)
+    
+  })
+  
+  #hop
+  output$hop <- renderUI({
+    req(input$file1)
+    d<-data.frame(m=head(values$df_data4$`Member ID`,10))
+    d2<-data.frame(m=head(values$df_data5$`Member ID`,10))
+    nodes3<-rbind(d,d2)
+    selectInput(inputId = "hopvar",
+                label = "Select the node",
+                choices = nodes3$m)
+  })
+  
+  #centrality
+  output$centrality <- renderUI({
+    req(input$file1)
+    d3<-head(values$df_data7[order(-values$df_data7$centrality_withself),],10)
+    selectInput(inputId = "central_node",
+                label = "Select the centrality node",
+                choices = d3$id)
+  })
+  
+  #indegree
+  output$indegree <- renderUI({
+    req(input$file1)
+    d4<-head(values$df_data7[order(-values$df_data7$in_degree_withself),],10)
+    selectInput(inputId = "indegree_node",
+                label = "Select the in degree centrality node",
+                choices = d4$id)
+  })
+  
+  #betweenness
+  output$between <- renderUI({
+    req(input$file1)
+    d5<-values$df_data8
+    selectInput(inputId = "between_node",
+                label = "Select the Between centrality node",
+                choices = d5$node)
+  })
+  
+  #slider
+  output$slider <- renderUI({
+    req(input$file1)
+    numericInput(inputId = "obs",
+                 label = "Enter number of observations to display",
+                 value = 10)
+  })
+  
+  #top n connection
+  output$contents1 <- renderDataTable({
+    values$df_data3
+    #values$df_data8
+  })
+  
+  #mail sent data display
+  output$contents3 <- renderTable({
+    values$df_data4
+  })
+  
+  #mails recieved display
+  output$contents4 <- renderTable({
+    values$df_data5
+  })
+  
+  
+  
+  #from and to
+  output$plot3 <- renderVisNetwork({
+    req(input$file1)
+    req(input$hopvar)
+    nodes3<-input$hopvar
+    
+    nodes<-data.frame(id=unique(c(values$df_data1$`Mail From: Member ID`,values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from = values$df_data1$`Mail From: Member ID`, to = values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    hop_list1<-sort(values$df_data1[which(values$df_data1$`Mail From: Member ID`==nodes3),]$`Mail To : Member ID`)
+    hop_list1=data.frame(id=c(unique(hop_list1),nodes3))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size=rep(20,nrow(hop_list1))
+    
+    edges <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1[which(nodes1$id==nodes3),]$hop1<-2
+    nodes1[which(nodes1$id==nodes3),]$size<-35
+    nodes1[is.na(nodes1$hop1),]$hop1<-3
+    nodes1[is.na(nodes1$size),]$size<-10
+    
+    net <- graph_from_data_frame(edges,nodes1,directed=T) 
+    colrs <- c("forestgreen", "firebrick","steelblue")
+    V(net)$color <- colrs[nodes1$hop]
+    V(net)$title <- nodes1$id
+    V(net)$size <- nodes1$size
+    
+    
+    visIgraph(net) %>% 
+      visEdges(color = "black", width=0.2,dashes=TRUE ) %>%
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)
+    
+  })
+  
+  #from and two display
+  output$contents8 <-  renderPrint({
+    req(input$file1)
+    req(input$hopvar)
+    nodes3<-input$hopvar
+    
+    nodes<-data.frame(id=unique(c(values$df_data1$`Mail From: Member ID`,values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from = values$df_data1$`Mail From: Member ID`, to = values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    hop_list1<-sort(values$df_data1[which(values$df_data1$`Mail From: Member ID`==nodes3),]$`Mail To : Member ID`)
+    hop_list1=data.frame(id=c(unique(hop_list1),nodes3))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size=rep(20,nrow(hop_list1))
+    
+    edges <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1[which(nodes1$id==nodes3),]$hop1<-2
+    nodes1[which(nodes1$id==nodes3),]$size<-35
+    nodes1[is.na(nodes1$hop1),]$hop1<-3
+    nodes1[is.na(nodes1$size),]$size<-10
+    
+    cat(paste0( "Selected Node:", nodes3, "\n", "\n", 
+                "One hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==1),]$id, collapse = ","), "\n", "\n",
+                "Two hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==3),]$id, collapse=","), "\n"))
+    
+    
+  })
+  
+  
+  #central node all
+  output$plot8 <- renderVisNetwork({
+    req(input$file1)
+    req(input$file2)
+    
+    d3<-head( values$df_data7[order(- values$df_data7$centrality_withself),],10)
+    nodes3=data.frame(id=d3$id) #change #nodes3<- 160
+    nodes3$hop0=rep(0,nrow(nodes3))
+    nodes3$size0=rep(35,nrow(nodes3))
+    
+    nodes<-data.frame(id=unique(c( values$df_data1$`Mail From: Member ID`, values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from =  values$df_data1$`Mail From: Member ID`, to =  values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    #from here
+    hop_list1_from<-merge(nodes3, edges, by.x="id", by.y="from")
+    hop_list1_to<-merge(nodes3, edges, by.x="id", by.y="to")
+    
+    hop_list1=data.frame(id=unique(c(hop_list1_from$to,hop_list1_to$from,nodes3$id)))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size1=rep(20,nrow(hop_list1)) 
+    
+    edges_from <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    edges_to <-merge(edges,hop_list1, by.x = "to", by.y = "id")
+    edges<-unique(rbind(edges_from,edges_to))
+    
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1<-merge(nodes1,nodes3,all.x = TRUE)
+    nodes1$hop_all<-coalesce(nodes1$hop0,nodes1$hop1)
+    nodes1$size_all<-coalesce(nodes1$size0,nodes1$size1)
+    nodes1[is.na(nodes1$hop_all),]$hop_all<-2
+    nodes1[is.na(nodes1$size_all),]$size_all<-10 #hop2
+    
+    
+    nodes1<-merge.data.frame(nodes1, values$df_data2, by.x="id",by.y = "Member ID")
+    nodes1$group<-nodes1$`Department ID`
+    nodes1$title = paste("member:",nodes1$id,"department:",nodes1$`Department ID`,"hop:",nodes1$hop_all)
+    
+    #from here
+    edges$arrows<-NULL
+    net <- graph_from_data_frame(edges,nodes1,directed = F) 
+    V(net)$color <- nodes1$`Department ID` 
+    V(net)$size <- nodes1$size_all
+    visIgraph(net ) %>% visLegend(ncol=3,main = list(text = "Department Legend",
+                                                     style = "font-family:Comic Sans MS;color:#ff0000;font-size:12px;text-align:center;")) %>% 
+      visEdges(color = "black", width=0.2,dashes=TRUE) %>%
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) 
+    
+  })
+  
+  #central data
+  output$contents9 <- renderPrint({
+    req(input$file1)
+    req(input$file2)
+    req(input$central_node)
+    nodes3<-input$central_node
+    
+    nodes<-data.frame(id=unique(c(values$df_data1$`Mail From: Member ID`,values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from = values$df_data1$`Mail From: Member ID`, to = values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    hop_list1_from<-sort(unique(values$df_data1[which(values$df_data1$`Mail From: Member ID`==nodes3),]$`Mail To : Member ID`))
+    hop_list1_to<-sort(unique(values$df_data1[which(values$df_data1$`Mail To : Member ID`==nodes3),]$`Mail From: Member ID`))
+    hop_list1<-unique(c(hop_list1_from,hop_list1_to))
+    
+    hop_list1=data.frame(id=c(unique(hop_list1),nodes3))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size=rep(20,nrow(hop_list1)) #hop1
+    
+    edges_from <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    edges_to <-merge(edges,hop_list1, by.x = "to", by.y = "id")
+    edges<-unique(rbind(edges_from,edges_to))
+    
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1[which(nodes1$id==nodes3),]$hop1<-0
+    nodes1[which(nodes1$id==nodes3),]$size<-35 #hop0
+    nodes1[is.na(nodes1$hop1),]$hop1<-2
+    nodes1[is.na(nodes1$size),]$size<-10 #hop2
+    
+    cat(paste0( "Selected Node:", nodes3, "\n", "\n", 
+                "One hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==1),]$id, collapse = ","), "\n", "\n",
+                "Two hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==2),]$id, collapse=","), "\n"))
+    
+  })
+  
+  
+  
+  #indegree centrality all
+  output$plot9 <- renderVisNetwork({
+    req(input$file1)
+    req(input$file2)
+    
+    d3<-head( values$df_data7[order(- values$df_data7$in_degree_withself),],10)
+    nodes3=data.frame(id=d3$id) #change #nodes3<- 160
+    nodes3$hop0=rep(0,nrow(nodes3))
+    nodes3$size0=rep(35,nrow(nodes3))
+    
+    nodes<-data.frame(id=unique(c( values$df_data1$`Mail From: Member ID`, values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from =  values$df_data1$`Mail From: Member ID`, to =  values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    hop_list1<-merge(nodes3, edges, by.x="id", by.y="from") #change #sort( values$df_data1[which( values$df_data1$`Mail From: Member ID`==nodes3),]$`Mail To : Member ID`)
+    hop_list1=data.frame(id=c(unique(hop_list1$to),nodes3$id))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size1=rep(20,nrow(hop_list1)) 
+    
+    edges <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1<-merge(nodes1,nodes3,all.x = TRUE)
+    nodes1$hop_all<-coalesce(nodes1$hop0,nodes1$hop1)
+    nodes1$size_all<-coalesce(nodes1$size0,nodes1$size1)
+    nodes1[is.na(nodes1$hop_all),]$hop_all<-2
+    nodes1[is.na(nodes1$size_all),]$size_all<-10 #hop2
+    nodes1<-merge.data.frame(nodes1, values$df_data2, by.x="id",by.y = "Member ID")
+    nodes1$group<-nodes1$`Department ID`
+    nodes1$title = paste("member:",nodes1$id,"department:",nodes1$`Department ID`,"hop:",nodes1$hop_all)
+    
+    #from here
+    #edges$arrows<-NULL
+    net <- graph_from_data_frame(edges,nodes1,directed = F) 
+    V(net)$color <- nodes1$`Department ID` 
+    V(net)$size <- nodes1$size_all
+    visIgraph(net ) %>% visLegend(ncol=3,main = list(text = "Department Legend",
+                                                     style = "font-family:Comic Sans MS;color:#ff0000;font-size:12px;text-align:center;")) %>% 
+      visEdges(color = "black", width=0.2,dashes=TRUE) %>%
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) 
+  })
+  
+  
+  
+  #indegree data
+  output$contents10 <- renderPrint({
+    req(input$file1)
+    req(input$file2)
+    req(input$indegree_node)
+    nodes3<-input$indegree_node
+    
+    nodes<-data.frame(id=unique(c(values$df_data1$`Mail From: Member ID`,values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from = values$df_data1$`Mail From: Member ID`, to = values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    hop_list1<-sort(values$df_data1[which(values$df_data1$`Mail From: Member ID`==nodes3),]$`Mail To : Member ID`)
+    hop_list1=data.frame(id=c(unique(hop_list1),nodes3))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size=rep(20,nrow(hop_list1)) #hop1
+    
+    edges <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1[which(nodes1$id==nodes3),]$hop1<-0
+    nodes1[which(nodes1$id==nodes3),]$size<-35 #hop0
+    nodes1[is.na(nodes1$hop1),]$hop1<-2
+    nodes1[is.na(nodes1$size),]$size<-10 #hop2
+    
+    cat(paste0( "Selected Node:", nodes3, "\n", "\n", 
+                "One hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==1),]$id, collapse = ","), "\n", "\n",
+                "Two hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==2),]$id, collapse=","), "\n"))
+    
+  })
+  
+  #between all
+  output$plot10 <- renderVisNetwork({
+    req(input$file1)
+    req(input$file2)
+    
+    nodes3=data.frame(id=values$df_data8$node) #change #nodes3<- 160
+    nodes3$hop0=rep(0,nrow(nodes3))
+    nodes3$size0=rep(35,nrow(nodes3))
+    
+    nodes<-data.frame(id=unique(c( values$df_data1$`Mail From: Member ID`, values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from =  values$df_data1$`Mail From: Member ID`, to =  values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    hop_list1_from<-merge(nodes3, edges, by.x="id", by.y="from")
+    hop_list1_to<-merge(nodes3, edges, by.x="id", by.y="to")
+    
+    hop_list1=data.frame(id=unique(c(hop_list1_from$to,hop_list1_to$from,nodes3$id)))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size1=rep(20,nrow(hop_list1)) 
+    
+    edges_from <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    edges_to <-merge(edges,hop_list1, by.x = "to", by.y = "id")
+    edges<-unique(rbind(edges_from,edges_to))
+    
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1<-merge(nodes1,nodes3,all.x = TRUE)
+    nodes1$hop_all<-coalesce(nodes1$hop0,nodes1$hop1)
+    nodes1$size_all<-coalesce(nodes1$size0,nodes1$size1)
+    nodes1[is.na(nodes1$hop_all),]$hop_all<-2
+    nodes1[is.na(nodes1$size_all),]$size_all<-10 #hop2
+    
+    
+    nodes1<-merge.data.frame(nodes1, values$df_data2, by.x="id",by.y = "Member ID")
+    nodes1$group<-nodes1$`Department ID`
+    nodes1$title = paste("member:",nodes1$id,"department:",nodes1$`Department ID`,"hop:",nodes1$hop_all)
+    
+    #from here
+    edges$arrows<-NULL
+    net <- graph_from_data_frame(edges,nodes1,directed = F) 
+    V(net)$color <- nodes1$`Department ID` 
+    V(net)$size <- nodes1$size_all
+    visIgraph(net ) %>% visLegend(ncol=3,main = list(text = "Department Legend",
+                                                     style = "font-family:Comic Sans MS;color:#ff0000;font-size:12px;text-align:center;")) %>% 
+      visEdges(color = "black", width=0.2,dashes=TRUE) %>%
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) 
+  })
+  
+  
+  #between data
+  output$contents11 <- renderPrint({
+    req(input$file1)
+    req(input$file2)
+    req(input$between_node)
+    nodes3<-input$between_node
+    
+    nodes<-data.frame(id=unique(c(values$df_data1$`Mail From: Member ID`,values$df_data1$`Mail To : Member ID`)))
+    edges <- data.frame(from = values$df_data1$`Mail From: Member ID`, to = values$df_data1$`Mail To : Member ID`, arrows="to")
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T) 
+    
+    hop_list1_from<-sort(unique(values$df_data1[which(values$df_data1$`Mail From: Member ID`==nodes3),]$`Mail To : Member ID`))
+    hop_list1_to<-sort(unique(values$df_data1[which(values$df_data1$`Mail To : Member ID`==nodes3),]$`Mail From: Member ID`))
+    hop_list1<-unique(c(hop_list1_from,hop_list1_to))
+    
+    hop_list1=data.frame(id=c(unique(hop_list1),nodes3))
+    hop_list1$hop1=rep(1,nrow(hop_list1))
+    hop_list1$size=rep(20,nrow(hop_list1)) #hop1
+    
+    edges_from <-merge(edges,hop_list1, by.x = "from", by.y = "id")
+    edges_to <-merge(edges,hop_list1, by.x = "to", by.y = "id")
+    edges<-unique(rbind(edges_from,edges_to))
+    
+    nodes<-data.frame(id=unique(c(edges$from,edges$to)))
+    
+    nodes1<-merge(nodes,unique(hop_list1), all.x = TRUE)
+    nodes1[which(nodes1$id==nodes3),]$hop1<-0
+    nodes1[which(nodes1$id==nodes3),]$size<-35 #hop0
+    nodes1[is.na(nodes1$hop1),]$hop1<-2
+    nodes1[is.na(nodes1$size),]$size<-10 #hop2
+    
+    cat(paste0( "Selected Node:", nodes3, "\n", "\n", 
+                "One hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==1),]$id, collapse = ","), "\n", "\n",
+                "Two hop nodes for the selected node", "\n", paste0(nodes1[which(nodes1$hop1==2),]$id, collapse=","), "\n"))
+    
+  })
+  
+  
+  #department
+  output$plot6 <- renderVisNetwork({
+    req(input$file1)
+    req(input$file2)
+    
+    depar<-merge.data.frame(values$df_data1,values$df_data2, by.x="Mail From: Member ID",by.y = "Member ID")
+    colnames(depar)[which(names(depar) == "Department ID")] <- "Department ID From"
+    depar<-merge.data.frame(depar,values$df_data2, by.x="Mail To : Member ID",by.y = "Member ID")
+    colnames(depar)[which(names(depar) == "Department ID")] <- "Department ID To"
+    department<-data.table(table(depar$`Department ID From`, depar$`Department ID To`))
+    names(department)<-c("Department from which emails are originating", "Department to which the emails are being sent","Number of mails sent")
+    department<-department[which(department$`Number of mails sent`!=0),]
+    department<-department[order(department$`Department from which emails are originating`),]
+    
+    
+    nodes<-data.frame(id=unique(c( department$`Department from which emails are originating`, department$`Department to which the emails are being sent`)))
+    edges <- data.frame(from =  department$`Department from which emails are originating`, to =  department$`Department to which the emails are being sent`, arrows="to", label=department$`Number of mails sent`)
+    nodes$title = paste("department:",nodes$id)
+    net <- graph_from_data_frame(d=edges, vertices=nodes, directed=T)
+    
+    visIgraph(net ) %>% 
+      visEdges(color = "black", width=0.2,dashes=TRUE, title="dsad") %>%
+      visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)  
+  })
+  
+  #department
+  output$contents7 <- renderDataTable({
+    req(input$file1)
+    req(input$file2)
+    
+    depar<-merge.data.frame(values$df_data1,values$df_data2, by.x="Mail From: Member ID",by.y = "Member ID")
+    colnames(depar)[which(names(depar) == "Department ID")] <- "Department ID From"
+    depar<-merge.data.frame(depar,values$df_data2, by.x="Mail To : Member ID",by.y = "Member ID")
+    colnames(depar)[which(names(depar) == "Department ID")] <- "Department ID To"
+    department<-data.table(table(depar$`Department ID From`, depar$`Department ID To`))
+    names(department)<-c("Department from which emails are originating", "Department to which the emails are being sent","Number of mails sent")
+    department<-department[which(department$`Number of mails sent`!=0),]
+    department<-department[order(department$`Department from which emails are originating`),]
+    department
+  })
+  
+  
+  
+}
+
+# Create Shiny app ----
+shinyApp(ui, server)
