@@ -5,7 +5,7 @@ sapply(load.libraries, require, character = TRUE)
 
 
 ui <- 
-  navbarPage("Sathvik Reddy Junutula - Social Network Analysis of Totota Camry on Cars.com",
+  navbarPage("Sathvik Reddy Junutula - Social Network Analysis of European Research Institute",
              theme = shinythemes::shinytheme("yeti"),
              #shinythemes::themeSelector(),
              tabsetPanel(id = "tabs",
