@@ -1,1 +1,8 @@
-Test test
+# Sentiment Analysis on Cars.com (R)
+# Programmatically download and analysed live car reviews using NLP. Compute sentiment analysis of each review using AFFIN index and
+# predict the customer rating based on it using Decision Trees and Random Forest. 
+# Computed and Visualized top words with TF-IDF scores and provide it to manufacturers to take necessary action for future manufacturing.
+
+
+1) Run the code in R-Studio and run the app
+2) The URL is defaulted to https://www.cars.com/research/toyota-camry/ 
