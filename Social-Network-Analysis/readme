@@ -1,1 +1,13 @@
+# Network Analysis using graph theory for European Research Institution (R)
+# Analysed network of all incoming and outgoing e-mails of institution. Computed and Visualized total e-mails sent/received, degree
+  centrality, betweenness centrality, n-hop neighbors for each
+  employee,department & pointed top and bottom metrics.
+# Reported to Institution to understand the directed connections in the organization and take actions accordingly.
+
+
+1) Run the code in R-studio and run the shiny app
+2) If any occurs  run the UI and SHINY codes separately
+3) Two files are attached and can be uploaded when shiny app opens
+
+
 
